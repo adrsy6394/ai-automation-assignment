@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const redditAutomation = require('../services/redditAutomation.service');
 
 /**
  * Handle POST /create-account
@@ -31,11 +32,29 @@ async function createAccount(req, res, next) {
       });
     }
 
-    logger.info(`Mocking account creation for user: ${username}`);
-    return res.status(200).json({
-      success: true,
-      username: username.trim()
-    });
+    logger.info(`Initiating automated account creation for user: ${username}`);
+    const result = await redditAutomation.createAccount(username.trim(), email.trim(), password);
+
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        username: result.username
+      });
+    } else {
+      if (result.captchaDetected) {
+        logger.warn(`CAPTCHA blocked account creation for user: ${username}`);
+        return res.status(400).json({
+          success: false,
+          message: 'Account creation failed: CAPTCHA block encountered. CAPTCHA solving must be completed.',
+          captchaDetected: true
+        });
+      }
+      logger.error(`Account creation automation failed for user: ${username} - ${result.message}`);
+      return res.status(500).json({
+        success: false,
+        message: result.message || 'Account creation automation failed.'
+      });
+    }
   } catch (error) {
     next(error);
   }
