@@ -1,11 +1,12 @@
 const logger = require('../utils/logger');
+const redditAutomation = require('../services/redditAutomation.service');
 
 /**
  * Handle POST /create-post
  */
 async function createPost(req, res, next) {
   try {
-    const { subreddit, title, content } = req.body;
+    const { subreddit, title, content, username } = req.body;
 
     if (!subreddit || typeof subreddit !== 'string' || subreddit.trim() === '') {
       logger.warn('Create Post validation failed: missing or empty subreddit');
@@ -31,11 +32,32 @@ async function createPost(req, res, next) {
       });
     }
 
-    logger.info(`Mocking post creation in subreddit: ${subreddit} with title: "${title}"`);
-    return res.status(200).json({
-      status: 'success',
-      postUrl: `https://www.reddit.com/r/${subreddit.trim()}/comments/mock_post_id`
-    });
+    // Default username fallback
+    const targetUser = username ? username.trim() : null;
+
+    logger.info(`Initiating automated post creation in r/${subreddit} with title: "${title}"`);
+    const result = await redditAutomation.createPost(targetUser, subreddit.trim(), title.trim(), content.trim());
+
+    if (result.success) {
+      return res.status(200).json({
+        status: 'success',
+        postUrl: result.postUrl
+      });
+    } else {
+      if (result.message && (result.message.includes('Session') || result.message.includes('session'))) {
+        logger.warn(`Create Post failed: session expired or missing for user: ${targetUser || 'default'}`);
+        return res.status(401).json({
+          success: false,
+          message: result.message
+        });
+      }
+      
+      logger.error(`Create Post failed: ${result.message}`);
+      return res.status(500).json({
+        success: false,
+        message: result.message || 'Failed to create post.'
+      });
+    }
   } catch (error) {
     next(error);
   }
