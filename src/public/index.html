@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reddit Automation Control Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="background-decor">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+  </div>
+
+  <div class="dashboard-container">
+    <header class="header">
+      <div class="logo">
+        <span class="pulse-indicator"></span>
+        <h1>Reddit AutoPilot</h1>
+      </div>
+      <div class="api-status">
+        <span class="status-dot online"></span>
+        <span class="status-text">System Online</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Session Storage Panel -->
+      <section class="card glass-card full-width">
+        <div class="card-header">
+          <h2>Active Authenticated Sessions</h2>
+          <button id="refresh-sessions-btn" class="btn btn-secondary">Refresh Sessions</button>
+        </div>
+        <div class="card-body">
+          <p class="sessions-desc">The following users have valid cookie sessions stored in <code>cookies/</code> directory. You can select them as targets in subsequent requests.</p>
+          <div id="active-sessions-list" class="sessions-tags">
+            <span class="no-sessions">No active sessions found. Complete account creation or place cookie sessions manually in <code>cookies/</code>.</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid-layout">
+        <!-- Panel 1: Create Account -->
+        <section class="card glass-card">
+          <h2>1. Create Reddit Account</h2>
+          <p class="card-subtitle">Automates registration page typing, form submission, and retrieves registration outcomes.</p>
+          
+          <form id="create-account-form">
+            <div class="form-group">
+              <label for="reg-email">Email Address</label>
+              <input type="email" id="reg-email" placeholder="e.g. user@gmail.com" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-username">Username</label>
+              <input type="text" id="reg-username" placeholder="e.g. redditor_automator" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-password">Password</label>
+              <input type="password" id="reg-password" placeholder="Min. 8 characters" required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-submit-account">
+              <span class="btn-text">Execute Registration</span>
+              <span class="spinner hidden"></span>
+            </button>
+          </form>
+
+          <div id="account-result" class="result-box hidden"></div>
+        </section>
+
+        <!-- Panel 2: Join Subreddit -->
+        <section class="card glass-card">
+          <h2>2. Join Subreddit</h2>
+          <p class="card-subtitle">Loads authenticated browser sessions and joins the target subreddit with safety checks.</p>
+          
+          <form id="join-subreddit-form">
+            <div class="form-group">
+              <label for="join-user-select">Target User Context</label>
+              <select id="join-user-select" class="form-select" required>
+                <option value="" disabled selected>Select session context...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="join-subreddit-name">Subreddit Name</label>
+              <div class="input-prefix-container">
+                <span class="prefix">r/</span>
+                <input type="text" id="join-subreddit-name" placeholder="e.g. javascript" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-submit-join">
+              <span class="btn-text">Execute Join Action</span>
+              <span class="spinner hidden"></span>
+            </button>
+          </form>
+
+          <div id="join-result" class="result-box hidden"></div>
+        </section>
+
+        <!-- Panel 3: Create Post -->
+        <section class="card glass-card">
+          <h2>3. Create Subreddit Post</h2>
+          <p class="card-subtitle">Automates navigation to posting panels, inputting text, submitting, and capturing URL redirects.</p>
+          
+          <form id="create-post-form">
+            <div class="form-group">
+              <label for="post-user-select">Target User Context</label>
+              <select id="post-user-select" class="form-select" required>
+                <option value="" disabled selected>Select session context...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="post-subreddit-name">Subreddit Name</label>
+              <div class="input-prefix-container">
+                <span class="prefix">r/</span>
+                <input type="text" id="post-subreddit-name" placeholder="e.g. javascript" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="post-title">Post Title</label>
+              <input type="text" id="post-title" placeholder="Make it catchy..." required>
+            </div>
+            <div class="form-group">
+              <label for="post-content">Post Content (Body Text)</label>
+              <textarea id="post-content" placeholder="Content text or markdown formatting..." rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-submit-post">
+              <span class="btn-text">Execute Post Action</span>
+              <span class="spinner hidden"></span>
+            </button>
+          </form>
+
+          <div id="post-result" class="result-box hidden"></div>
+        </section>
+      </div>
+
+      <!-- Info/Documentations Section -->
+      <section class="card glass-card info-section full-width">
+        <h3>Architecture & Anti-Spam Strategy</h3>
+        <div class="info-grid">
+          <div>
+            <h4>🔒 Session Management</h4>
+            <p>Authentication sessions are tracked by browser context cookies. Once registration completes, cookies are saved to <code>cookies/${username}_session.json</code> and re-injected automatically for subsequent actions, avoiding repeated login checks.</p>
+          </div>
+          <div>
+            <h4>🤖 CAPTCHA & Security</h4>
+            <p>Reddit implements CAPTCHA challenge screens. When automated browser instances detect a CAPTCHA iframe on registration, the server gracefully intercepts the event, aborts gracefully, and returns a CAPTCHA detection warning block.</p>
+          </div>
+          <div>
+            <h4>⏳ Human-like Delay Timings</h4>
+            <p>Anti-bot detection is mitigated by interleaving randomized delays (e.g. 1s - 5s) between browser events, focus elements, page navigation load settling, and typing keystroke timing intervals (80ms - 120ms).</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Reddit Automation Engine Server running on Node.js + Playwright + Express</p>
+    </footer>
+  </div>
+</body>
+</html>

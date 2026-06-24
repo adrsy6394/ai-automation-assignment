@@ -10,6 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Static Files serving (public folder)
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Request Logging Middleware
 app.use((req, res, next) => {
   logger.info(`HTTP ${req.method} ${req.originalUrl}`);
@@ -19,16 +22,22 @@ app.use((req, res, next) => {
 const createAccountRoute = require('./routes/createAccount.route');
 const joinSubredditRoute = require('./routes/joinSubreddit.route');
 const createPostRoute = require('./routes/createPost.route');
+const sessionsRoute = require('./routes/sessions.route');
 
-// Setup placeholder response for root
-app.get('/', (req, res) => {
-  res.json({ message: 'Reddit Automation API is running' });
+// Setup root route with content negotiation
+app.get('/', (req, res, next) => {
+  if (req.accepts('html')) {
+    next(); // fall through to express.static serving index.html
+  } else {
+    res.json({ message: 'Reddit Automation API is running' });
+  }
 });
 
 // Register routes
 app.use(createAccountRoute);
 app.use(joinSubredditRoute);
 app.use(createPostRoute);
+app.use(sessionsRoute);
 
 // Catch-all Route Not Found
 app.use((req, res, next) => {
