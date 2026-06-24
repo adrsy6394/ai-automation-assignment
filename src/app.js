@@ -30,6 +30,14 @@ app.use(createAccountRoute);
 app.use(joinSubredditRoute);
 app.use(createPostRoute);
 
+// Catch-all Route Not Found
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.originalUrl}`
+  });
+});
+
 // Global Error Handler
 app.use((err, req, res, next) => {
   logger.error(`Unhandled Error: ${err.message}`);
