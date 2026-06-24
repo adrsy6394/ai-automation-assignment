@@ -1,0 +1,30 @@
+{
+  "name": "ai-automation-assignment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrsy6394/ai-automation-assignment.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adrsy6394/ai-automation-assignment/issues"
+  },
+  "homepage": "https://github.com/adrsy6394/ai-automation-assignment#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "playwright": "^1.61.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

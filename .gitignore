@@ -1,0 +1,8 @@
+node_modules/
+.env
+logs/*
+!logs/.gitkeep
+cookies/*
+!cookies/.gitkeep
+.DS_Store
+Thumbs.db
