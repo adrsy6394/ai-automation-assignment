@@ -4,6 +4,15 @@ const config = require('../config/playwright.config');
 const logger = require('../utils/logger');
 
 class RedditAutomationService {
+  /**
+   * Helper to sleep execution for a random period between min and max (in milliseconds).
+   * Used to simulate human interaction intervals and prevent automation flagging.
+   */
+  delay(min, max) {
+    const time = Math.floor(Math.random() * (max - min + 1) + min);
+    return new Promise(resolve => setTimeout(resolve, time));
+  }
+
   async launchBrowser() {
     logger.info('Launching Chromium browser...');
     const browser = await chromium.launch({
@@ -64,6 +73,9 @@ class RedditAutomationService {
       // Navigate to Settings to check if session is still logged in
       logger.info(`Verifying session cookies for user: ${username || 'default'}`);
       await page.goto('https://www.reddit.com/settings', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      
+      // Artificial delay to simulate human-like settings page load check
+      await this.delay(1000, 2500);
 
       const url = page.url();
       if (url.includes('/login') || url.includes('/register')) {
@@ -111,6 +123,9 @@ class RedditAutomationService {
 
       logger.info(`Navigating to Reddit register page for user: ${username}`);
       await page.goto('https://www.reddit.com/register', { waitUntil: 'domcontentloaded', timeout: 45000 });
+      
+      // Anti-Spam: delay after navigation to mimic reading/loading time
+      await this.delay(2000, 4000);
 
       // Helper function to detect CAPTCHAs on the page
       const checkCaptcha = async () => {
@@ -160,8 +175,14 @@ class RedditAutomationService {
         throw new Error('Email input field not found on register page');
       }
 
-      await emailInput.fill(email);
+      // Anti-Spam: simulate keystroke-typing delays
+      await emailInput.focus();
+      await this.delay(500, 1500);
+      await page.keyboard.type(email, { delay: 100 });
       logger.info('Email filled successfully');
+
+      // Anti-Spam: delay before clicking continue
+      await this.delay(1000, 2000);
 
       // Check if continue button exists and needs to be clicked (multi-step signup)
       const continueSelectors = [
@@ -181,7 +202,8 @@ class RedditAutomationService {
       if (continueBtn) {
         await continueBtn.click();
         logger.info('Clicked continue button to load step 2');
-        await page.waitForTimeout(2000);
+        // Anti-Spam: delay to wait for panel transition
+        await this.delay(2000, 3500);
       }
 
       // Check if CAPTCHA popped up early
@@ -230,10 +252,23 @@ class RedditAutomationService {
         throw new Error('Username or Password input field not found on registration step');
       }
 
-      await usernameInput.fill(username);
+      // Anti-Spam: focus and slow-type username
+      await usernameInput.focus();
+      await this.delay(500, 1200);
+      await page.keyboard.type(username, { delay: 120 });
       logger.info('Username filled successfully');
-      await passwordInput.fill(password);
+
+      // Anti-Spam: delay between filling username and password
+      await this.delay(800, 2000);
+
+      // Anti-Spam: focus and slow-type password
+      await passwordInput.focus();
+      await this.delay(400, 1000);
+      await page.keyboard.type(password, { delay: 100 });
       logger.info('Password filled successfully');
+
+      // Anti-Spam: delay before clicking register submit
+      await this.delay(1500, 3000);
 
       // 3. Click Submit / Sign Up
       const signUpSelectors = [
@@ -257,7 +292,8 @@ class RedditAutomationService {
       await signUpBtn.click();
       logger.info('Clicked submission / Sign Up button');
 
-      await page.waitForTimeout(5000);
+      // Anti-Spam: delay to wait for registration transition
+      await this.delay(4000, 6000);
 
       // Check if CAPTCHA popped up
       if (await checkCaptcha()) {
@@ -342,6 +378,9 @@ class RedditAutomationService {
       logger.info(`Navigating to subreddit: r/${subreddit}`);
       await page.goto(`https://www.reddit.com/r/${subreddit}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
+      // Anti-Spam: delay after page loading to mimic scanning reading pattern
+      await this.delay(2000, 4500);
+
       // Check accessibility (private, restricted, banned, not found)
       const checkAccessibility = async () => {
         const text = await page.innerText('body').catch(() => '');
@@ -404,11 +443,14 @@ class RedditAutomationService {
         throw new Error('Join button not found on subreddit page');
       }
 
+      // Anti-Spam: delay before clicking Join button
+      await this.delay(1000, 2500);
+
       await joinBtn.click();
       logger.info('Clicked Join button');
 
       // Verify status change
-      await page.waitForTimeout(3000);
+      await this.delay(2000, 3500);
       const leaveSelectors = [
         'button:has-text("Joined")',
         'button:has-text("Leave")',
@@ -457,6 +499,9 @@ class RedditAutomationService {
       logger.info(`Navigating to posting page for subreddit: r/${subreddit}`);
       await page.goto(`https://www.reddit.com/r/${subreddit}/submit`, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
+      // Anti-Spam: wait after navigation
+      await this.delay(3000, 5000);
+
       // Validate submit fields exist
       logger.info('Looking for title and content input fields...');
       const titleSelectors = [
@@ -491,15 +536,26 @@ class RedditAutomationService {
         throw new Error('Title input field not found on submit page');
       }
 
-      await titleInput.fill(title);
+      // Anti-Spam: focus and slow-type title
+      await titleInput.focus();
+      await this.delay(500, 1500);
+      await page.keyboard.type(title, { delay: 90 });
       logger.info('Filled post title');
 
+      // Anti-Spam: delay before typing body content
+      await this.delay(1000, 2500);
+
       if (contentInput) {
-        await contentInput.fill(content);
+        await contentInput.focus();
+        await this.delay(400, 1000);
+        await page.keyboard.type(content, { delay: 80 });
         logger.info('Filled post content');
       } else {
         logger.warn('Content body input box not found or optional, continuing...');
       }
+
+      // Anti-Spam: delay before clicking submit button
+      await this.delay(2000, 4000);
 
       // Locate Submit / Post button
       logger.info('Looking for Post submission button...');
@@ -535,6 +591,9 @@ class RedditAutomationService {
 
       const postUrl = page.url();
       logger.info(`Post submission page url: ${postUrl}`);
+
+      // Anti-Spam: delay before releasing the browser to look natural
+      await this.delay(1500, 3000);
 
       await context.close();
       await browser.close();
